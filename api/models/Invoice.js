@@ -60,93 +60,70 @@ module.exports = {
   syncWithFreshbooks: function(cb) {
     freshbooksApi = new freshbooks.getInstance();
 
-    var options = { per_page: 100 };
-    var processPage = function(error, list, meta) {
-      if (error) {
-        cb(error);
-      }
-      else {
-        sails.log.debug("Adding page: " + meta.page);
-        sails.log.debug (meta);
-        for (i in list) {
-          var item = list[i];
-          list[i] = Invoice.convertFromJsonObj(item);
-        }
+    freshbooks.eachListItem(freshbooksApi.invoice,
+      function(error, item, cb) {
+        item = Invoice.convertFromJsonObj(item);
 
-        Invoice.create(list, function(error, created) {
+        Invoice.create(item, function(error, created) {
           if (error) {
             sails.log.debug("Error: " + error);
             return cb(error);
           }
           else {
-            meta.page = parseInt(meta.page);
-            meta.pages = parseInt(meta.pages);
-
-            options.page = meta.page + 1;
-            sails.log.debug("Calling next page:", options.page);
-            if (meta.page < meta.pages) {
-              freshbooksApi.invoice.list(options, processPage);
-            }
-            else {
-              return cb(error);
-            }
+            // No problem
+            return cb();
           }
         });
-
+      },
+      function(error) {
+        sails.log.debug("Added Invoices");
+        // No problem
       }
-    }
-
-    freshbooksApi.invoice.list(options, processPage);
+    );
   },
 
   convertFromJsonObj: function(jsonObj) {
-    jsonObj.invoice_id = parseInt(jsonObj.invoice_id);
+    // jsonObj.invoice_id
     if (jsonObj.estimate_id == '') {
       delete jsonObj.estimate_id;
     }
-    else {
-      jsonObj.estimate_id = parseInt(jsonObj.estimate_id);
-    }
-    jsonObj.number = parseInt(jsonObj.number);
-    jsonObj.client_id = parseInt(jsonObj.client_id);
-    jsonObj.contacts = JSON.stringify(jsonObj.contacts);
-    //jsonObj.recurring_id
-    //jsonObj.organization
-    //jsonObj.first_name
-    //jsonObj.last_name
-    //jsonObj.p_street1
-    //jsonObj.p_street2
-    //jsonObj.p_city
-    //jsonObj.p_state
-    //jsonObj.p_country
-    //jsonObj.p_code
+    // jsonObj.number
+    // jsonObj.client_id
+    // jsonObj.contacts
+    // jsonObj.recurring_id
+    // jsonObj.organization
+    // jsonObj.first_name
+    // jsonObj.last_name
+    // jsonObj.p_street1
+    // jsonObj.p_street2
+    // jsonObj.p_city
+    // jsonObj.p_state
+    // jsonObj.p_country
+    // jsonObj.p_code
     if (jsonObj.po_number == '') {
       delete jsonObj.po_number;
     }
-    else {
-      jsonObj.po_number = parseInt(jsonObj.po_number);
-    }
-    //jsonObj.status
-    jsonObj.amount = parseFloat(jsonObj.amount);
-    jsonObj.amount_outstanding = parseFloat(jsonObj.amount_outstanding);
-    jsonObj.paid = parseFloat(jsonObj.paid);
-    jsonObj.date = new Date(jsonObj.date);
-    //jsonObj.notes
-    //jsonObj.terms
-    jsonObj.discount = parseFloat(jsonObj.discount);
-    //jsonObj.return_uri
-    jsonObj.updated = new Date(jsonObj.updated);
-    //jsonObj.currency_code
-    //jsonObj.language
-    //jsonObj.vat_name
-    //jsonObj.vat_number
-    //jsonObj.folder
-    jsonObj.staff_id = parseInt(jsonObj.staff_id);
+    // jsonObj.status
+    // jsonObj.amount
+    // jsonObj.amount_outstanding
+    // jsonObj.paid
+    // jsonObj.date
+    // jsonObj.notes
+    // jsonObj.terms
+    // jsonObj.discount
+    // jsonObj.return_uri
+    // jsonObj.updated
+    // jsonObj.currency_code
+    // jsonObj.language
+    // jsonObj.vat_name
+    // jsonObj.vat_number
+    // jsonObj.folder
+    // jsonObj.staff_id
     jsonObj.lines = JSON.stringify(jsonObj.lines);
     delete jsonObj.url;
     delete jsonObj.auth_url;
     jsonObj.links = JSON.stringify(jsonObj.links);
-    //jsonObj.gateways
+    // jsonObj.gateways
 
     return jsonObj;
   }

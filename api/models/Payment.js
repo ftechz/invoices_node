@@ -26,55 +26,39 @@ module.exports = {
   syncWithFreshbooks: function(cb) {
     freshbooksApi = new freshbooks.getInstance();
 
-    var options = { per_page: 100 };
-    var processPage = function(error, list, meta) {
-      if (error) {
-        cb(error);
-      }
-      else {
-        sails.log.debug("Adding page: " + meta.page);
-        sails.log.debug (meta);
-        for(i in list) {
-          list[i] = Payment.convertFromJsonObj(list[i]);
-        }
+    freshbooks.eachListItem(freshbooksApi.payment,
+      function(error, item, cb) {
+        item = Payment.convertFromJsonObj(item);
 
-        Payment.create(list, function(error, created) {
+        Payment.create(item, function(error, created) {
           if (error) {
             sails.log.debug("Error: " + error);
             return cb(error);
           }
           else {
-            meta.page = parseInt(meta.page);
-            meta.pages = parseInt(meta.pages);
-
-            if (meta.page < meta.pages) {
-              options.page = meta.page + 1;
-              sails.log.debug("Calling next page:", options.page);
-              freshbooksApi.payment.list(options, processPage);
-            }
-            else {
-              return cb(error);
-            }
+            // No problem
+            return cb();
           }
         });
-
+      },
+      function(error) {
+        sails.log.debug("Added Payments");
+        // No problem
       }
-    }
-
-    freshbooksApi.payment.list(options, processPage);
+    );
   },
 
   convertFromJsonObj: function(jsonObj) {
-    jsonObj.payment_id = parseInt(jsonObj.payment_id);
-    jsonObj.invoice_id = parseInt(jsonObj.invoice_id);
-    jsonObj.date = new Date(jsonObj.date);
+    // jsonObj.payment_id
+    // jsonObj.invoice_id
+    // jsonObj.date
     // jsonObj.type
     // jsonObj.notes
-    jsonObj.client_id = parseInt(jsonObj.client_id);
-    jsonObj.amount = parseFloat(jsonObj.amount);
-    jsonObj.updated = new Date(jsonObj.updated);
+    // jsonObj.client_id
+    // jsonObj.amount
+    // jsonObj.updated
     // jsonObj.currency_code
-    jsonObj.from_credit = parseFloat(jsonObj.from_credit);
+    // jsonObj.from_credit
 
     return jsonObj;
   }

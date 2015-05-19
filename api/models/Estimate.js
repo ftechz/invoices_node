@@ -44,49 +44,33 @@ module.exports = {
   syncWithFreshbooks: function(cb) {
     freshbooksApi = new freshbooks.getInstance();
 
-    var options = { per_page: 100 };
-    var processPage = function(error, list, meta) {
-      if (error) {
-        cb(error);
-      }
-      else {
-        sails.log.debug("Adding page: " + meta.page);
-        sails.log.debug (meta);
-        for(i in list) {
-          list[i] = Estimate.convertFromJsonObj(list[i]);
-        }
+    freshbooks.eachListItem(freshbooksApi.estimate,
+      function(error, item, cb) {
+        item = Estimate.convertFromJsonObj(item);
 
-        Estimate.create(list, function(error, created) {
+        Estimate.create(item, function(error, created) {
           if (error) {
             sails.log.debug("Error: " + error);
             return cb(error);
           }
           else {
-            meta.page = parseInt(meta.page);
-            meta.pages = parseInt(meta.pages);
-
-            if (meta.page < meta.pages) {
-              options.page = meta.page + 1;
-              sails.log.debug("Calling next page:", options.page);
-              freshbooksApi.estimate.list(options, processPage);
-            }
-            else {
-              return cb(error);
-            }
+            // No problem
+            return cb();
           }
         });
-
+      },
+      function(error) {
+        sails.log.debug("Added Estimates");
+        // No problem
       }
-    }
-
-    freshbooksApi.estimate.list(options, processPage);
+    );
   },
 
   convertFromJsonObj: function(jsonObj) {
-    jsonObj.estimate_id = parseInt(jsonObj.estimate_id);
-    jsonObj.number = parseInt(jsonObj.number);
-    jsonObj.staff_id = parseInt(jsonObj.staff_id);
-    jsonObj.client_id = parseInt(jsonObj.client_id);
+    // jsonObj.estimate_id
+    // jsonObj.number
+    // jsonObj.staff_id
+    // jsonObj.client_id
     jsonObj.contacts = JSON.stringify(jsonObj.contacts);
     // jsonObj.organization
     // jsonObj.first_name
@@ -97,13 +81,13 @@ module.exports = {
     // jsonObj.p_state
     // jsonObj.p_country
     // jsonObj.p_code
-    jsonObj.po_number = parseInt(jsonObj.po_number);
+    // jsonObj.po_number
     // jsonObj.status
-    jsonObj.amount = parseFloat(jsonObj.amount);
-    jsonObj.date = new Date(jsonObj.date);
+    // jsonObj.amount
+    // jsonObj.date
     // jsonObj.notes
     // jsonObj.terms
-    jsonObj.discount = parseFloat(jsonObj.discount);
+    // jsonObj.discount
     // jsonObj.language
     // jsonObj.currency_code
     // jsonObj.vat_name

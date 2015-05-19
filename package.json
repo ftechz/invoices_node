@@ -5,6 +5,7 @@
   "description": "Refresh of the invoices system built on sail.js",
   "keywords": [],
   "dependencies": {
+    "async": "^0.9.2",
     "bcryptjs": "^2.1.0",
     "ejs": "~0.8.4",
     "grunt": "0.4.2",

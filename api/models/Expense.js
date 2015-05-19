@@ -39,53 +39,36 @@ module.exports = {
   syncWithFreshbooks: function(cb) {
     freshbooksApi = new freshbooks.getInstance();
 
-    var options = { per_page: 100 };
-    var processPage = function(error, list, meta) {
-      if (error) {
-        cb(error);
-      }
-      else {
-        sails.log.debug("Adding page: " + meta.page);
-        sails.log.debug (meta);
-        for (i in list) {
-          var item = list[i];
-          list[i] = Expense.convertFromJsonObj(item);
-        }
+    freshbooks.eachListItem(freshbooksApi.expense,
+      function(error, item, cb) {
+        item = Expense.convertFromJsonObj(item);
 
-        Expense.create(list, function(error, created) {
+        Expense.create(item, function(error, created) {
           if (error) {
             sails.log.debug("Error: " + error);
             return cb(error);
           }
           else {
-            meta.page = parseInt(meta.page);
-            meta.pages = parseInt(meta.pages);
-
-            if (meta.page < meta.pages) {
-              options.page = meta.page + 1;
-              sails.log.debug("Calling next page:", options.page);
-              freshbooksApi.expense.list(options, processPage);
-            }
-            else {
-              return cb(error);
-            }
+            // No problem
+            return cb();
           }
         });
-
+      },
+      function(error) {
+        sails.log.debug("Added Expenses");
+        // No problem
       }
-    }
-
-    freshbooksApi.expense.list(options, processPage);
+    );
   },
 
   convertFromJsonObj: function(jsonObj) {
-    jsonObj.expense_id = parseInt(jsonObj.expense_id);
-    jsonObj.category_id = parseInt(jsonObj.category_id);
-    jsonObj.project_id = parseInt(jsonObj.project_id);
-    jsonObj.client_id = parseInt(jsonObj.client_id);
-    jsonObj.staff_id = parseInt(jsonObj.staff_id);
-    jsonObj.amount = parseInt(jsonObj.amount);
-    jsonObj.date = new Date(jsonObj.date);
+    // jsonObj.expense_id
+    // jsonObj.category_id
+    // jsonObj.project_id
+    // jsonObj.client_id
+    // jsonObj.staff_id
+    // jsonObj.amount
+    // jsonObj.date
     // jsonObj.notes
     jsonObj.status = (jsonObj.status == '1');
     // jsonObj.vendor
@@ -95,26 +78,16 @@ module.exports = {
       delete jsonObj.tax1_percent;
       delete jsonObj.tax1_amount;
     }
-    else {
-      // jsonObj.tax1_name
-      jsonObj.tax1_percent = parseFloat(jsonObj.tax1_percent);
-      jsonObj.tax1_amount = parseFloat(jsonObj.tax1_amount);
-    }
 
     if (jsonObj.tax2_name == '' || jsonObj.tax2_percent == '' || jsonObj.tax2_amount == '') {
       delete jsonObj.tax2_name;
       delete jsonObj.tax2_percent;
       delete jsonObj.tax2_amount;
     }
-    else {
-      // jsonObj.tax2_name
-      jsonObj.tax2_percent = parseFloat(jsonObj.tax2_percent);
-      jsonObj.tax2_amount = parseFloat(jsonObj.tax2_amount);
-    }
-    jsonObj.compound_tax = parseFloat(jsonObj.compound_tax);
+    // jsonObj.compound_tax
     // jsonObj.folder
     jsonObj.has_receipt = (jsonObj.has_receipt == '1');
-    jsonObj.updated = new Date(jsonObj.updated);
+    // jsonObj.updated
     return jsonObj;
   }
 
