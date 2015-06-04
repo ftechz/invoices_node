@@ -54,4 +54,6 @@ module.exports.policies = {
   ExpenseController: ['freshbooksSyncing'],
   InvoiceController: ['freshbooksSyncing'],
   RecurringController: ['freshbooksSyncing'],
+
+  FreshbooksWebhookController: true,
 };

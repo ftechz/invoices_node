@@ -46,4 +46,5 @@ module.exports.routes = {
   *                                                                          *
   ***************************************************************************/
 
+  'POST /FreshbooksWebhook': 'FreshbooksWebhookController.callback',
 };
