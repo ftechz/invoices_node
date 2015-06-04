@@ -1,0 +1,11 @@
+{
+  "name": "invoices_node",
+  "version": "0.0.1",
+  "private": true,
+  "dependencies": {
+    "angular-material": "~0.9.4"
+  },
+  "exportsOverride": {
+
+  }
+}

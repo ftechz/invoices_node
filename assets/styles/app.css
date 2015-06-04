@@ -1,0 +1,14 @@
+/* Toolbar area */
+md-toolbar {
+  z-index: 3;
+}
+
+md-toolbar h1 {
+  margin: auto;
+}
+
+md-toolbar h1 {
+  font-size: inherit;
+  font-weight: inherit;
+  margin: inherit;
+}
