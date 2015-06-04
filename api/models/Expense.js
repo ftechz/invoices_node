@@ -37,28 +37,47 @@ module.exports = {
   },
 
   syncWithFreshbooks: function(cb) {
-    freshbooksApi = new freshbooks.getInstance();
+    var self = this;
 
-    freshbooks.eachListItem(freshbooksApi.expense,
-      function(error, item, cb) {
-        item = Expense.convertFromJsonObj(item);
+    async.series([
+      // Delete all entires
+      function(cb) {
+        self.destroy({}, function(error){ cb(error); });
+      },
+      // Fetch entries from Freshbooks
+      function(cb) {
+        freshbooksApi = freshbooks.getInstance();
 
-        Expense.create(item, function(error, created) {
-          if (error) {
-            sails.log.debug("Error: " + error);
+        freshbooks.eachListItem(freshbooksApi.expense,
+          function(error, item, cb) {
+            item = self.convertFromJsonObj(item);
+
+            self.create(item, function(error, created) {
+              if (error) {
+                sails.log.debug("Error: " + error);
+                return cb(error);
+              }
+              else {
+                // No problem
+                return cb();
+              }
+            });
+          },
+          function(error) {
+            if (error) {
+              sails.log.debug("Error while adding expenses");
+            }
+            else {
+              sails.log.debug("Added expenses");
+            }
             return cb(error);
           }
-          else {
-            // No problem
-            return cb();
-          }
-        });
-      },
-      function(error) {
-        sails.log.debug("Added Expenses");
-        // No problem
+        );
       }
-    );
+    ],
+    function(error) {
+      return cb(error);
+    });
   },
 
   convertFromJsonObj: function(jsonObj) {

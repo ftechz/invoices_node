@@ -6,6 +6,9 @@
  */
 
 module.exports = {
-	
+	sync: function(req, res) {
+		Estimate.syncWithFreshbooks(function(error) {
+			
+		})
+	}
 };
-

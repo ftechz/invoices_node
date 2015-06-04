@@ -19,29 +19,51 @@ module.exports = {
     }
   },
 
+  /**
+   * cb(error)
+   */
   syncWithFreshbooks: function(cb) {
-    freshbooksApi = new freshbooks.getInstance();
+    var self = this;
 
-    freshbooks.eachListItem(freshbooksApi.category,
-      function(error, item, cb) {
-        item = Category.convertFromJsonObj(item);
+    async.series([
+      // Delete all entires
+      function(cb) {
+        self.destroy({}, function(error){ cb(error); });
+      },
+      // Fetch entries from Freshbooks
+      function(cb) {
+        freshbooksApi = freshbooks.getInstance();
 
-        Category.create(item, function(error, created) {
-          if (error) {
-            sails.log.debug("Error: " + error);
+        freshbooks.eachListItem(freshbooksApi.category,
+          function(error, item, cb) {
+            item = self.convertFromJsonObj(item);
+
+            self.create(item, function(error, created) {
+              if (error) {
+                sails.log.debug("Error: " + error);
+                return cb(error);
+              }
+              else {
+                // No problem
+                return cb();
+              }
+            });
+          },
+          function(error) {
+            if (error) {
+              sails.log.debug("Error while adding categories");
+            }
+            else {
+              sails.log.debug("Added categories");
+            }
             return cb(error);
           }
-          else {
-            // No problem
-            return cb();
-          }
-        });
-      },
-      function(error) {
-        sails.log.debug("Added Categories");
-        // No problem
+        );
       }
-    );
+    ],
+    function(error) {
+      return cb(error);
+    });
   },
 
   convertFromJsonObj: function(jsonObj) {

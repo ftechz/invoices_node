@@ -42,28 +42,47 @@ module.exports = {
   },
 
   syncWithFreshbooks: function(cb) {
-    freshbooksApi = new freshbooks.getInstance();
+    var self = this;
 
-    freshbooks.eachListItem(freshbooksApi.estimate,
-      function(error, item, cb) {
-        item = Estimate.convertFromJsonObj(item);
+    async.series([
+      // Delete all entires
+      function(cb) {
+        self.destroy({}, function(error){ cb(error); });
+      },
+      // Fetch entries from Freshbooks
+      function(cb) {
+        freshbooksApi = freshbooks.getInstance();
 
-        Estimate.create(item, function(error, created) {
-          if (error) {
-            sails.log.debug("Error: " + error);
+        freshbooks.eachListItem(freshbooksApi.estimate,
+          function(error, item, cb) {
+            item = self.convertFromJsonObj(item);
+
+            self.create(item, function(error, created) {
+              if (error) {
+                sails.log.debug("Error: " + error);
+                return cb(error);
+              }
+              else {
+                // No problem
+                return cb();
+              }
+            });
+          },
+          function(error) {
+            if (error) {
+              sails.log.debug("Error while adding estimates");
+            }
+            else {
+              sails.log.debug("Added estimates");
+            }
             return cb(error);
           }
-          else {
-            // No problem
-            return cb();
-          }
-        });
-      },
-      function(error) {
-        sails.log.debug("Added Estimates");
-        // No problem
+        );
       }
-    );
+    ],
+    function(error) {
+      return cb(error);
+    });
   },
 
   convertFromJsonObj: function(jsonObj) {
@@ -81,7 +100,9 @@ module.exports = {
     // jsonObj.p_state
     // jsonObj.p_country
     // jsonObj.p_code
-    // jsonObj.po_number
+    if (jsonObj.po_number == '') {
+      delete jsonObj.po_number;
+    }
     // jsonObj.status
     // jsonObj.amount
     // jsonObj.date

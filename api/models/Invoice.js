@@ -58,28 +58,47 @@ module.exports = {
   },
 
   syncWithFreshbooks: function(cb) {
-    freshbooksApi = new freshbooks.getInstance();
+    var self = this;
 
-    freshbooks.eachListItem(freshbooksApi.invoice,
-      function(error, item, cb) {
-        item = Invoice.convertFromJsonObj(item);
+    async.series([
+      // Delete all entires
+      function(cb) {
+        self.destroy({}, function(error){ cb(error); });
+      },
+      // Fetch entries from Freshbooks
+      function(cb) {
+        freshbooksApi = freshbooks.getInstance();
 
-        Invoice.create(item, function(error, created) {
-          if (error) {
-            sails.log.debug("Error: " + error);
+        freshbooks.eachListItem(freshbooksApi.invoice,
+          function(error, item, cb) {
+            item = self.convertFromJsonObj(item);
+
+            self.create(item, function(error, created) {
+              if (error) {
+                sails.log.debug("Error: " + error);
+                return cb(error);
+              }
+              else {
+                // No problem
+                return cb();
+              }
+            });
+          },
+          function(error) {
+            if (error) {
+              sails.log.debug("Error while adding invoices");
+            }
+            else {
+              sails.log.debug("Added invoices");
+            }
             return cb(error);
           }
-          else {
-            // No problem
-            return cb();
-          }
-        });
-      },
-      function(error) {
-        sails.log.debug("Added Invoices");
-        // No problem
+        );
       }
-    );
+    ],
+    function(error) {
+      return cb(error);
+    });
   },
 
   convertFromJsonObj: function(jsonObj) {
@@ -89,7 +108,7 @@ module.exports = {
     }
     // jsonObj.number
     // jsonObj.client_id
-    // jsonObj.contacts
+    jsonObj.contacts = JSON.stringify(jsonObj.contacts);
     // jsonObj.recurring_id
     // jsonObj.organization
     // jsonObj.first_name
